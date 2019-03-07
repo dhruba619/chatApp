@@ -5,9 +5,19 @@ import org.tomlang.livechat.enums.SupportedLanguages;
 public class UserRequest {
 
     private String email;
-    private String full_name;
+    private String fullName;
     private String password;
     private SupportedLanguages language;
+    private String appName;
+    
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
 
     public String getEmail() {
         return email;
@@ -17,12 +27,12 @@ public class UserRequest {
         this.email = email;
     }
 
-    public String getFull_name() {
-        return full_name;
+    public String getFullName() {
+        return fullName;
     }
 
-    public void setFull_name(String full_name) {
-        this.full_name = full_name;
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getPassword() {
@@ -41,12 +51,13 @@ public class UserRequest {
         this.language = language;
     }
 
-    public UserRequest(String email, String full_name, String password, SupportedLanguages language) {
+    public UserRequest(String email, String fullName, String password, SupportedLanguages language, String appName) {
         super();
         this.email = email;
-        this.full_name = full_name;
+        this.fullName = fullName;
         this.password = password;
         this.language = language;
+        this.appName = appName;
 
     }
 
@@ -56,7 +67,7 @@ public class UserRequest {
 
     @Override
     public String toString() {
-        return "UserRequest [email=" + email + ", full_name=" + full_name + "]";
+        return "UserRequest [email=" + email + ", fullName=" + fullName + "]";
 
     }
 }

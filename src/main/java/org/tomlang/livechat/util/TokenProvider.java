@@ -40,6 +40,8 @@ public class TokenProvider {
     
     @Value("${app.jwt.ttl}")
     private String jwtTTL;
+    
+    
       
     public static final String TOKEN_ISSUER = "LIVE-CHAT-APP";
     public  String createAccessToken(User user) {

@@ -10,7 +10,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.tomlang.livechat.enums.Role;
+import org.tomlang.livechat.enums.UserStatus;
 
 /**
  * UserAppDetails Entity class
@@ -26,10 +28,10 @@ public class UserAppDetails {
     private Integer id;
     
     
-    @Column(name="chat_label")
-    private String chatLabel;
+    @Column(name="chat_title")
+    private String chatTitle;
     
-    @Column(name="user_id")
+    @Column(name="user_id", nullable=true)
     private Integer userId;
     
     
@@ -39,6 +41,10 @@ public class UserAppDetails {
     @Column(name="is_away")
     private boolean isAway;
     
+    @Enumerated
+    @Column(name="user_status",columnDefinition = "int")
+    private UserStatus userStatus;
+    
     
     @Enumerated
     @Column(name="role",columnDefinition = "int")
@@ -46,6 +52,24 @@ public class UserAppDetails {
     
     @Column(name="last_pinged")
     private Long lastPinged;
+    
+    
+    @Column(name="joined")
+    @CreationTimestamp
+    private Date joined;
+    
+    @Column(name="invited_details_id")
+    private Integer invitedDetailsId;
+
+
+    public Date getJoined() {
+        return joined;
+    }
+
+
+    public void setJoined(Date joined) {
+        this.joined = joined;
+    }
 
 
     public UserAppDetails() {
@@ -56,7 +80,7 @@ public class UserAppDetails {
     public UserAppDetails(Integer id, String chatLabel, Integer userId, Integer appDetailsId, boolean isAway, Role role, Long lastPinged) {
         super();
         this.id = id;
-        this.chatLabel = chatLabel;
+        this.chatTitle = chatLabel;
         this.userId = userId;
         this.appDetailsId = appDetailsId;
         this.isAway = isAway;
@@ -75,13 +99,13 @@ public class UserAppDetails {
     }
 
 
-    public String getChatLabel() {
-        return chatLabel;
+    public String getChatTitle() {
+        return chatTitle;
     }
 
 
-    public void setChatLabel(String chatLabel) {
-        this.chatLabel = chatLabel;
+    public void setChatTitle(String chatLabel) {
+        this.chatTitle = chatLabel;
     }
 
 
@@ -135,9 +159,29 @@ public class UserAppDetails {
     }
 
 
+    public UserStatus getUserStatus() {
+        return userStatus;
+    }
+
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
+    }
+
+
+    public Integer getInvitedDetailsId() {
+        return invitedDetailsId;
+    }
+
+
+    public void setInvitedDetailsId(Integer invitedDetailsId) {
+        this.invitedDetailsId = invitedDetailsId;
+    }
+
+
     @Override
     public String toString() {
-        return "UserAppDetails [id=" + id + ", chatLabel=" + chatLabel + ", userId=" + userId + ", appDetailsId=" + appDetailsId + "]";
+        return "UserAppDetails [id=" + id + ", chatTitle=" + chatTitle + ", userId=" + userId + ", appDetailsId=" + appDetailsId + "]";
     }
     
     

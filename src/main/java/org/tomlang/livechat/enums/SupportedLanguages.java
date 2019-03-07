@@ -1,7 +1,7 @@
 package org.tomlang.livechat.enums;
 
 public enum SupportedLanguages {
-    GERMAN(0), ENGLISH(1);
+    ger(0), eng(1);
 
     private Integer value;
 

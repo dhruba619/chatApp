@@ -1,6 +1,7 @@
 package org.tomlang.livechat.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import org.tomlang.livechat.json.NotificationSettings;
 import org.tomlang.livechat.json.SocialLinks;
 import org.tomlang.livechat.json.UserPrivateInformation;
 import org.tomlang.livechat.repositories.AppDetailsRepository;
+import org.tomlang.livechat.repositories.AppRepository;
 import org.tomlang.livechat.repositories.UserAppDetailsRepository;
 import org.tomlang.livechat.util.TokenProvider;
 
@@ -37,16 +39,17 @@ public class UserAppService {
     @Autowired
     private AppService appService;
 
-
-    
     @Autowired
     TokenProvider tokenProvider;
 
     @Autowired
     private UserAppDetailsRepository userAppDetailsRepository;
-    
+
     @Autowired
     private AppDetailsRepository appDetailsRepository;
+
+    @Autowired
+    private AppRepository appRepository;
 
     @Value("${app.livechat.lastpinnged.seconds}")
     private long lastPingedTTL;
@@ -57,8 +60,9 @@ public class UserAppService {
         try {
             App app = appService.getAppByHashToken(appHash);
 
-            //Token token = tokenRepository.findByToken(authToken);
-            User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken)).get();
+            // Token token = tokenRepository.findByToken(authToken);
+            User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+                .get();
 
             UserAppDetails details = userService.getByUserAndAppDetails(user.getId(), app.getAppDetailsId());
 
@@ -75,8 +79,9 @@ public class UserAppService {
         try {
             App app = appService.getAppByHashToken(appHashCode);
 
-            //Token token = tokenRepository.findByToken(authToken);
-            User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken)).get();
+            // Token token = tokenRepository.findByToken(authToken);
+            User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+                .get();
 
             UserAppDetails details = userService.getByUserAndAppDetails(user.getId(), app.getAppDetailsId());
             details.setAway(payload.isAwayValue());
@@ -91,8 +96,9 @@ public class UserAppService {
     public UserPrivateInformation getUserPrivateInformationForApp(String authToken, String appHashCode) throws LiveChatException {
         App app = appService.getAppByHashToken(appHashCode);
 
-        //Token token = tokenRepository.findByToken(authToken);
-        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken)).get();
+        // Token token = tokenRepository.findByToken(authToken);
+        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
 
         UserAppDetails details = userService.getByUserAndAppDetails(user.getId(), app.getAppDetailsId());
 
@@ -119,22 +125,31 @@ public class UserAppService {
 
     private UserStatus deriveStatus(UserAppDetails details) {
 
+        if (null != details.getUserStatus()) {
+            if (details.getUserStatus()
+                .equals(UserStatus.DEACTIVATED)) {
+                return UserStatus.DEACTIVATED;
+            }
+
+        }
+
         if (details.isAway()) {
             return UserStatus.AWAY;
         }
+        if (null != details.getLastPinged()) {
+            if (Instant.now()
+                .toEpochMilli() - details.getLastPinged() < lastPingedTTL * 1000) {
+                if (details.isAway()) {
 
-        if (Instant.now()
-            .toEpochMilli() - details.getLastPinged() < lastPingedTTL * 1000) {
-            if (details.isAway()) {
-
-                return UserStatus.AWAY;
+                    return UserStatus.AWAY;
+                }
+                return UserStatus.ONLINE;
             }
-            return UserStatus.ONLINE;
-        }
 
-        if (Instant.now()
-            .toEpochMilli() - details.getLastPinged() > lastPingedTTL * 1000) {
-            return UserStatus.OFFLINE;
+            if (Instant.now()
+                .toEpochMilli() - details.getLastPinged() > lastPingedTTL * 1000) {
+                return UserStatus.OFFLINE;
+            }
         }
 
         return UserStatus.OFFLINE;
@@ -143,22 +158,44 @@ public class UserAppService {
     public AppSpecificInfo getInformationForApp(String authToken, String appHashCode) throws LiveChatException {
         App app = appService.getAppByHashToken(appHashCode);
         Optional<AppDetails> appDetailsOptional = appDetailsRepository.findById(app.getAppDetailsId());
-        
+
         AppDetails appDetails = appDetailsOptional.get();
 
-        //Token token = tokenRepository.findByToken(authToken);
-        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken)).get();
+        // Token token = tokenRepository.findByToken(authToken);
+        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
 
         UserAppDetails details = userService.getByUserAndAppDetails(user.getId(), app.getAppDetailsId());
 
         AppSpecificInfo info = new AppSpecificInfo();
-        
+
         info.setDescription(appDetails.getDescription());
         info.setName(appDetails.getName());
         info.setImage(appDetails.getImage());
         info.setSocialLinks(appDetails.getSocialLinks());
         info.setTimeZone(appDetails.getTimeZone());
         return info;
+    }
+
+    /**
+     * Return last pinged app for the user
+     */
+    public String getLastPingedAppsByUser(String authToken) {
+        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
+        List<UserAppDetails> details = userAppDetailsRepository.getUserLastPingedUserAppDetails(user.getId());
+        UserAppDetails detail = details.get(0);
+        if (null != detail.getLastPinged()) {
+            App app = appRepository.findByAppDetailId(detail.getAppDetailsId());
+            return app.getAppHashcode();
+        } else {
+            details = userAppDetailsRepository.getUserFirstUserAppDetails(user.getId());
+            detail = details.get(0);
+            App app = appRepository.findByAppDetailId(detail.getAppDetailsId());
+            return app.getAppHashcode();
+
+        }
+
     }
 
 }

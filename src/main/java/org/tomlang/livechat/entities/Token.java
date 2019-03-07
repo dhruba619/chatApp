@@ -28,6 +28,17 @@ public class Token {
     
     @Column(name="time_to_live")
     private Long ttl;
+    
+    @Column(name="refresh_token")
+    private String refreshToken;
+    
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
 
     public Integer getId() {
         return id;

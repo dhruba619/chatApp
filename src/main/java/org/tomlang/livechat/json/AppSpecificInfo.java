@@ -1,5 +1,8 @@
 package org.tomlang.livechat.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class AppSpecificInfo {
 
     private String image;

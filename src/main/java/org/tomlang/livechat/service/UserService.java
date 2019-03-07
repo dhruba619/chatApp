@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -15,10 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.tomlang.livechat.entities.User;
 import org.tomlang.livechat.entities.UserAppDetails;
+import org.tomlang.livechat.enums.SupportedLanguages;
 import org.tomlang.livechat.exceptions.LiveChatException;
 import org.tomlang.livechat.json.NotificationSettings;
 import org.tomlang.livechat.json.UpdatePasswordRequest;
 import org.tomlang.livechat.json.UpdatePasswordResponse;
+import org.tomlang.livechat.json.UserAppDetailsResponse;
 import org.tomlang.livechat.json.UserRequest;
 import org.tomlang.livechat.json.UserUpdateProfileRequest;
 import org.tomlang.livechat.repositories.UserAppDetailsRepository;
@@ -30,6 +33,9 @@ import com.google.gson.Gson;
 
 @Service
 public class UserService {
+    
+    @Autowired
+    private AppDetailsService appDetailsService;
 
     @Autowired
     private UserRepository userRepository;
@@ -52,18 +58,22 @@ public class UserService {
             String encodedPassword = PasswordEncoder.encodePassword(request.getPassword(), passwordSalt);
 
             User user = new User();
-            user.setConfirmEmailHash(createEmailConfirmationHash(request.getEmail(), request.getFull_name()));
+            user.setConfirmEmailHash(createEmailConfirmationHash(request.getEmail(), request.getFullName()));
             user.setEmail(request.getEmail());
-            user.setFullName(request.getFull_name());
+            user.setFullName(request.getFullName());
             user.setPassword(encodedPassword);
             user.setPasswordSalt(passwordSalt);
             user.setJoinedDate(new Date(Instant.now()
                 .toEpochMilli()));
+            if(null!=request.getLanguage()) {
             user.setLanguage(request.getLanguage());
+            } else {
+                user.setLanguage(SupportedLanguages.eng);
+            }
             logger.info("Creating joined date");
             logger.info("User: " + request.getEmail() + "Joined on: " + user.getJoinedDate());
 
-            user.setHasConfirmedEmail(false);
+            user.setHasConfirmedEmail(true);
             userRepository.save(user);
             return user;
         } catch (ConstraintViolationException ex) {
@@ -168,6 +178,11 @@ public class UserService {
             return response;
         }
        
+    }
+    
+    public List<UserAppDetailsResponse> getUserAppDetails(String authToken) {
+        Integer userId = tokenProvider.getUserIdFromJwt(authToken);
+        return appDetailsService.getAppDetailsByUser(userId);
     }
 
 }

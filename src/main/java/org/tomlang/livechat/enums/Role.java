@@ -2,7 +2,7 @@ package org.tomlang.livechat.enums;
 
 public enum Role {
 
-    AGENT(0), CO_ADMIN(1), ADMIN(2);
+    AGENT(0), ADMIN(1), OWNER(2);
 
     private Integer value;
 

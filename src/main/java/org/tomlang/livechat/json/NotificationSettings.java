@@ -1,54 +1,37 @@
 package org.tomlang.livechat.json;
 
-import com.google.gson.Gson;
-
 public class NotificationSettings {
 
-    private boolean desktop_assigned;
-    private boolean desktop_send;
-    private boolean sound_assigned;
-    private boolean sound_send;
-    public boolean isDesktop_assigned() {
-        return desktop_assigned;
+    private boolean desktopAssigned;
+    private boolean desktopSend;
+    private boolean soundAssigned;
+    private boolean soundSend;
+    public boolean isDesktopAssigned() {
+        return desktopAssigned;
     }
-    public void setDesktop_assigned(boolean desktop_assigned) {
-        this.desktop_assigned = desktop_assigned;
+    public void setDesktopAssigned(boolean desktopAssigned) {
+        this.desktopAssigned = desktopAssigned;
     }
-    public boolean isDesktop_send() {
-        return desktop_send;
+    public boolean isDesktopSend() {
+        return desktopSend;
     }
-    public void setDesktop_send(boolean desktop_send) {
-        this.desktop_send = desktop_send;
+    public void setDesktopSend(boolean desktopSend) {
+        this.desktopSend = desktopSend;
     }
-    public boolean isSound_assigned() {
-        return sound_assigned;
+    public boolean isSoundAssigned() {
+        return soundAssigned;
     }
-    public void setSound_assigned(boolean sound_assigned) {
-        this.sound_assigned = sound_assigned;
+    public void setSoundAssigned(boolean soundAssigned) {
+        this.soundAssigned = soundAssigned;
     }
-    public boolean isSound_send() {
-        return sound_send;
+    public boolean isSoundSend() {
+        return soundSend;
     }
-    public void setSound_send(boolean sound_send) {
-        this.sound_send = sound_send;
+    public void setSoundSend(boolean soundSend) {
+        this.soundSend = soundSend;
     }
-    public NotificationSettings(boolean desktop_assigned, boolean desktop_send, boolean sound_assigned, boolean sound_send) {
-        super();
-        this.desktop_assigned = desktop_assigned;
-        this.desktop_send = desktop_send;
-        this.sound_assigned = sound_assigned;
-        this.sound_send = sound_send;
-    }
-    public NotificationSettings() {
-        super();
-        // TODO Auto-generated constructor stub
-    }
-    @Override
-    public String toString() {
-        Gson gson = new Gson();
-        return gson.toJson(this);
-        //return "NotificationSettings [desktop_assigned=" + desktop_assigned + ", desktop_send=" + desktop_send + ", sound_assigned=" + sound_assigned + ", sound_send=" + sound_send + "]";
-    }
+
+    
     
     
 }

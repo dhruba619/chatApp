@@ -21,6 +21,7 @@ import org.tomlang.livechat.repositories.AppDetailsRepository;
 import org.tomlang.livechat.repositories.AppRepository;
 import org.tomlang.livechat.repositories.TokenRepository;
 import org.tomlang.livechat.repositories.UserAppDetailsRepository;
+import org.tomlang.livechat.util.TimeZoneUtil;
 import org.tomlang.livechat.util.TokenProvider;
 
 @Service
@@ -40,6 +41,10 @@ public class AppService {
     @Autowired
     UserService userService;
     
+    @Autowired
+    TimeZoneUtil timeZoneUtil;
+    
+    
     
     @Autowired
     TokenRepository tokenRepository;
@@ -58,7 +63,12 @@ public class AppService {
         //create and save appdetails
         AppDetails details = new AppDetails();
         details.setName(request.getName());;
-        details.setTimeZone(request.getTimeZone());
+        if(timeZoneUtil.checkTimeZone(request.getTimeZone())) {
+            details.setTimeZone(request.getTimeZone());
+        } else {
+            details.setTimeZone(timeZoneUtil.getDefault());
+        }
+        
         details = appDetailsRepository.save(details);
         
       //create and save app
@@ -73,7 +83,7 @@ public class AppService {
         UserAppDetails userAppDetails = new UserAppDetails();
         userAppDetails.setAppDetailsId(details.getId());
         userAppDetails.setUserId(user.getId());
-        userAppDetails.setRole(Role.ADMIN);
+        userAppDetails.setRole(Role.OWNER);
         
         userAppDetailsRepository.save(userAppDetails);
         
