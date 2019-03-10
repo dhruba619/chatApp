@@ -3,6 +3,8 @@ package org.tomlang.livechat.service;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -14,8 +16,10 @@ import org.tomlang.livechat.entities.App;
 import org.tomlang.livechat.entities.AppDetails;
 import org.tomlang.livechat.entities.User;
 import org.tomlang.livechat.entities.UserAppDetails;
+import org.tomlang.livechat.enums.ChannelForwardPrefixConstant;
 import org.tomlang.livechat.enums.Role;
 import org.tomlang.livechat.exceptions.LiveChatException;
+import org.tomlang.livechat.json.AppChannelRequest;
 import org.tomlang.livechat.json.AppRequest;
 import org.tomlang.livechat.repositories.AppDetailsRepository;
 import org.tomlang.livechat.repositories.AppRepository;
@@ -26,87 +30,99 @@ import org.tomlang.livechat.util.TokenProvider;
 
 @Service
 public class AppService {
-    
+
     Logger logger = LoggerFactory.getLogger(AppService.class);
-    
+
     @Autowired
     AppRepository appRepository;
-    
+
     @Autowired
     AppDetailsRepository appDetailsRepository;
-    
+
     @Autowired
     UserAppDetailsRepository userAppDetailsRepository;
-    
+
     @Autowired
     UserService userService;
-    
+
     @Autowired
     TimeZoneUtil timeZoneUtil;
-    
-    
-    
+
     @Autowired
     TokenRepository tokenRepository;
-    
+
     @Autowired
     TokenProvider tokenProvider;
     
-    public App createApp(AppRequest request, String authToken) throws NoSuchAlgorithmException {
-        //find user from token
-        //Token token = tokenRepository.findByToken(request.getUser_token());
-        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken)).get();
-        
-        //create app hash code
+    @Autowired
+    AppChannelService appChannelService;
+
+    public App createApp(AppRequest request, String authToken) throws NoSuchAlgorithmException, LiveChatException {
+        // find user from token
+        // Token token = tokenRepository.findByToken(request.getUser_token());
+        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
+
+        // create app hash code
         String appHash = createAppHash();
-        
-        //create and save appdetails
+
+        // create and save appdetails
         AppDetails details = new AppDetails();
-        details.setName(request.getName());;
-        if(timeZoneUtil.checkTimeZone(request.getTimeZone())) {
+        details.setName(request.getName());
+        ;
+        if (timeZoneUtil.checkTimeZone(request.getTimeZone())) {
             details.setTimeZone(request.getTimeZone());
         } else {
             details.setTimeZone(timeZoneUtil.getDefault());
         }
-        
+
         details = appDetailsRepository.save(details);
-        
-      //create and save app
+
+        // create and save app
         App app = new App();
         app.setAppDetailsId(details.getId());
         app.setAppHashcode(appHash);
         app.setCreatedBy(user.getId());
         app = appRepository.save(app);
-        
-        //create and save user app details
-        
+
+        // create and save user app details
+
         UserAppDetails userAppDetails = new UserAppDetails();
         userAppDetails.setAppDetailsId(details.getId());
         userAppDetails.setUserId(user.getId());
         userAppDetails.setRole(Role.OWNER);
-        
+
         userAppDetailsRepository.save(userAppDetails);
-        
+        // Need to create the deafault channel for the app here
+        AppChannelRequest appChannelRequest = new AppChannelRequest();
+        appChannelRequest.setDefaultChannel(true);
+        appChannelRequest.setDescription("This is the default channel.");
+        appChannelRequest.setName("Default Channel");
+        List<String> mems = new ArrayList<>();
+        mems.add(ChannelForwardPrefixConstant.TEAM_MEMER+String.valueOf(user.getId()));
+        appChannelRequest.setMembers(mems);
+        appChannelService.createAppChannel(authToken, app.getAppHashcode(), appChannelRequest);
+
         return app;
-        
+
     }
-    
-    
+
     public App getAppByHashToken(String token) throws LiveChatException {
-        logger.info("Searching app by app hash: " +token);
-        
-        App app= appRepository.findByAppHashToken(token);
-        if(null!=app) {
+        logger.info("Searching app by app hash: " + token);
+
+        App app = appRepository.findByAppHashToken(token);
+        if (null != app) {
             return app;
         } else {
             throw new LiveChatException("No App found with given hash", HttpStatus.NOT_FOUND);
         }
-        
+
     }
-     
+
     private String createAppHash() throws NoSuchAlgorithmException {
 
-        String input = UUID.randomUUID().toString();
+        String input = UUID.randomUUID()
+            .toString();
         MessageDigest md = MessageDigest.getInstance("SHA-256");
 
         byte[] messageDigest = md.digest(input.getBytes());
@@ -119,5 +135,5 @@ public class AppService {
         hashtext = hashtext.substring(0, 8);
         return hashtext;
     }
-    
+
 }

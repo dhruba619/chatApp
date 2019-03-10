@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name="user_app_invited_detail")
@@ -33,7 +34,7 @@ public class UserAppInvitedDetails {
     private Date createdAt;
     
     @Column(name="modified_at")
-    @CreationTimestamp
+    @UpdateTimestamp
     private Date modifiedAt;
     
     @Column(name="ttl")
