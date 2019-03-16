@@ -21,6 +21,7 @@ import org.tomlang.livechat.enums.Role;
 import org.tomlang.livechat.enums.TagTarget;
 import org.tomlang.livechat.exceptions.LiveChatException;
 import org.tomlang.livechat.json.AppChannelRequest;
+import org.tomlang.livechat.json.AppDesignJson;
 import org.tomlang.livechat.json.AppRequest;
 import org.tomlang.livechat.json.AppTagJson;
 import org.tomlang.livechat.repositories.AppDetailsRepository;
@@ -55,13 +56,15 @@ public class AppService {
 
     @Autowired
     TokenProvider tokenProvider;
-    
+
     @Autowired
     AppChannelService appChannelService;
-    
-    
+
     @Autowired
     AppTagService appTagService;
+
+    @Autowired
+    AppDesignService appDesignService;
 
     public App createApp(AppRequest request, String authToken) throws NoSuchAlgorithmException, LiveChatException {
         // find user from token
@@ -99,32 +102,37 @@ public class AppService {
         userAppDetails.setRole(Role.OWNER);
 
         userAppDetailsRepository.save(userAppDetails);
-        
+
         // Need to create the deafault channel for the app here
         AppChannelRequest appChannelRequest = new AppChannelRequest();
         appChannelRequest.setDefaultChannel(true);
         appChannelRequest.setDescription("This is the default channel.");
         appChannelRequest.setName("Default Channel");
         List<String> mems = new ArrayList<>();
-        mems.add(ChannelForwardPrefixConstant.TEAM_MEMER+String.valueOf(user.getId()));
+        mems.add(ChannelForwardPrefixConstant.TEAM_MEMER + String.valueOf(user.getId()));
         appChannelRequest.setMembers(mems);
         appChannelService.createAppChannel(authToken, app.getAppHashcode(), appChannelRequest);
-        
-        //need to create the default tags here
-        AppTagJson json1 =  new AppTagJson();
+
+        // need to create the default tags here
+        AppTagJson json1 = new AppTagJson();
         json1.setColor("#3b7587");
         json1.setName("Open");
         json1.setTarget(TagTarget.CONVERSATION);
-        
-        AppTagJson json2 =  new AppTagJson();
+
+        AppTagJson json2 = new AppTagJson();
         json2.setColor("#e3ff00");
         json2.setName("New Lead");
         json2.setTarget(TagTarget.CONTACT);
         appTagService.createTag(authToken, appHash, json1);
         appTagService.createTag(authToken, appHash, json2);
-        
-        
 
+        // need to add the default design
+        AppDesignJson designJson = new AppDesignJson();
+        designJson.setCustomCss(null);
+        designJson.setThemeColor("#3b7587");
+        designJson.setWallpaper(0);
+
+        appDesignService.createDesign(appHash, designJson);
         return app;
 
     }
