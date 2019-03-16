@@ -35,6 +35,8 @@ import org.tomlang.livechat.json.SignUpInviteRequest;
 import org.tomlang.livechat.json.UpdatePasswordRequest;
 import org.tomlang.livechat.json.UpdatePasswordResponse;
 import org.tomlang.livechat.json.UserAppDetailsResponse;
+import org.tomlang.livechat.json.UserHasAppRequest;
+import org.tomlang.livechat.json.UserHasAppResponse;
 import org.tomlang.livechat.json.UserRequest;
 import org.tomlang.livechat.json.UserUpdateProfileRequest;
 import org.tomlang.livechat.service.AppService;
@@ -223,6 +225,15 @@ public class UserController {
 
         LastAppResponse response = new LastAppResponse();
         response.setAppHash(userAppService.getLastPingedAppsByUser(authToken));
+
+        return response;
+    }
+    
+    @GetMapping("/api/secured/user/private/has_app")
+    public UserHasAppResponse hasApp(@RequestHeader("Authorization") String authToken, @RequestBody UserHasAppRequest request) throws LiveChatException {
+
+        UserHasAppResponse response = new UserHasAppResponse();
+        response.setHasApp(userAppService.hasUserApp(authToken,request.getAppHash()));
 
         return response;
     }

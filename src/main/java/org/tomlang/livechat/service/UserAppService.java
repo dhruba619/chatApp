@@ -198,4 +198,17 @@ public class UserAppService {
 
     }
 
+    public boolean hasUserApp(String authToken, String appHash) throws LiveChatException {
+        App app = appService.getAppByHashToken(appHash);
+        Optional<AppDetails> appDetailsOptional = appDetailsRepository.findById(app.getAppDetailsId());
+        User user = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
+        if(appDetailsOptional.isPresent()) {
+           UserAppDetails details= userAppDetailsRepository.getByUserIdAndAppDetail(user.getId(), appDetailsOptional.get().getId());
+           if(null!=details)
+               return true;
+        }
+        return false;
+    }
+
 }
