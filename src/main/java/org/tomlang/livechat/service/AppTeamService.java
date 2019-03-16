@@ -2,7 +2,9 @@ package org.tomlang.livechat.service;
 
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.tomlang.livechat.entities.App;
+import org.tomlang.livechat.entities.AppDetails;
 import org.tomlang.livechat.entities.Token;
 import org.tomlang.livechat.entities.User;
 import org.tomlang.livechat.entities.UserAppDetails;
@@ -19,9 +22,12 @@ import org.tomlang.livechat.enums.UserStatus;
 import org.tomlang.livechat.exceptions.LiveChatException;
 import org.tomlang.livechat.json.AcceptInviteRequest;
 import org.tomlang.livechat.json.AcceptInviteResponse;
+import org.tomlang.livechat.json.ActivateDeactivateUninviteTeamRequest;
 import org.tomlang.livechat.json.AppTeamResponse;
+import org.tomlang.livechat.json.AppTeamResponseSimplified;
 import org.tomlang.livechat.json.CreateTeamRequest;
 import org.tomlang.livechat.json.SignUpInviteRequest;
+import org.tomlang.livechat.json.UpdateTeamMember;
 import org.tomlang.livechat.json.UserRequest;
 import org.tomlang.livechat.repositories.AppDetailsRepository;
 import org.tomlang.livechat.repositories.AppRepository;
@@ -224,4 +230,132 @@ public class AppTeamService {
         return response;
     }
 
+    public void activateDeactivateTeamMember(String authToken, String appHashCode, ActivateDeactivateUninviteTeamRequest request, boolean isReactivate) throws LiveChatException {
+        App app = appService.getAppByHashToken(appHashCode);
+        AppDetails appDetails = appDetailsRepository.findById(app.getAppDetailsId())
+            .get();
+
+        User actionUser = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
+        UserAppDetails actionUserAppDetails = userAppDetailsRepository.getByUserIdAndAppDetail(actionUser.getId(), appDetails.getId());
+        // check if targetUser is present
+        Optional<User> targetUserOptional = userService.getUserbyId(request.getId());
+        if (targetUserOptional.isPresent()) {
+            User targetUser = targetUserOptional.get();
+            UserAppDetails targetUserAppDetails = userAppDetailsRepository.getByUserIdAndAppDetail(targetUser.getId(), appDetails.getId());
+
+            if (!isReactivate) {
+                // checks for deactivation
+                if (Role.OWNER.equals(targetUserAppDetails.getRole())) {
+                    new LiveChatException("Owner cannot be deactivated", HttpStatus.BAD_REQUEST);
+                }
+                if (Role.OWNER.equals(actionUserAppDetails.getRole())) {
+                    if (Role.ADMIN.equals(targetUserAppDetails.getRole()) || Role.AGENT.equals(targetUserAppDetails.getRole())) {
+                        targetUserAppDetails.setUserStatus(UserStatus.DEACTIVATED);
+                        userAppDetailsRepository.save(targetUserAppDetails);
+                        return;
+                    }
+                }
+
+                if (Role.ADMIN.equals(actionUserAppDetails.getRole())) {
+                    if (Role.ADMIN.equals(targetUserAppDetails.getRole()) || Role.AGENT.equals(targetUserAppDetails.getRole())) {
+                        targetUserAppDetails.setUserStatus(UserStatus.DEACTIVATED);
+                        userAppDetailsRepository.save(targetUserAppDetails);
+                        return;
+                    }
+                }
+            } else {
+                targetUserAppDetails.setUserStatus(UserStatus.OFFLINE);
+                userAppDetailsRepository.save(targetUserAppDetails);
+            }
+        }
+    }
+
+    public void uninviteTeamMember(String authToken, String appHashCode, ActivateDeactivateUninviteTeamRequest request) throws LiveChatException {
+        App app = appService.getAppByHashToken(appHashCode);
+        AppDetails appDetails = appDetailsRepository.findById(app.getAppDetailsId())
+            .get();
+        UserAppDetails actionUserAppDetails = userAppDetailsRepository.getByUserIdAndAppDetail(request.getId(), appDetails.getId());
+        if (UserStatus.INVITED.equals(actionUserAppDetails.getUserStatus())) {
+            UserAppInvitedDetails invitedDetails = userAppDetailsInvitedRepository.findById(actionUserAppDetails.getInvitedDetailsId())
+                .get();
+            invitedDetails.setInvitationCode("INVALID");
+            actionUserAppDetails.setUserStatus(UserStatus.DEACTIVATED);
+            userAppDetailsRepository.save(actionUserAppDetails);
+            userAppDetailsInvitedRepository.save(invitedDetails);
+            userAppDetailsRepository.deleteById(actionUserAppDetails.getId());
+            userAppDetailsInvitedRepository.deleteById(invitedDetails.getId());
+        } else {
+            throw new LiveChatException("User not in invited status, cannot be univited", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public UpdateTeamMember updateTeamMember(String authToken, String appHashCode, UpdateTeamMember request) throws LiveChatException {
+        App app = appService.getAppByHashToken(appHashCode);
+        AppDetails appDetails = appDetailsRepository.findById(app.getAppDetailsId())
+            .get();
+
+        User actionUser = userService.getUserbyId(tokenProvider.getUserIdFromJwt(authToken))
+            .get();
+        UserAppDetails actionUserAppDetails = userAppDetailsRepository.getByUserIdAndAppDetail(actionUser.getId(), appDetails.getId());
+        UserAppDetails targetUserAppDetails = userAppDetailsRepository.getByUserIdAndAppDetail(request.getId(), appDetails.getId());
+        targetUserAppDetails.setChatTitle(request.getChatTitle());
+        if (Role.OWNER.equals(actionUserAppDetails.getRole())) {
+
+            targetUserAppDetails.setRole(request.getRole());
+            if (Role.OWNER.equals(request.getRole())) {
+                actionUserAppDetails.setRole(Role.ADMIN);
+                userAppDetailsRepository.save(actionUserAppDetails);
+            }
+            userAppDetailsRepository.save(targetUserAppDetails);
+
+        } else if (Role.ADMIN.equals(actionUserAppDetails.getRole())) {
+            if (Role.OWNER.equals(request.getRole())) {
+                throw new LiveChatException("Admin cannot make someone owner", HttpStatus.BAD_REQUEST);
+            }
+            targetUserAppDetails.setRole(request.getRole());
+            userAppDetailsRepository.save(targetUserAppDetails);
+        }
+
+        return request;
+    }
+
+    public List<AppTeamResponseSimplified> getAppTeamMembersSimlified(String authToken, String appHashCode) {
+        // find app by hashcode
+        // get all UserAppDetails where appdetails id from the found app
+        List<AppTeamResponseSimplified> reponses = new ArrayList<>();
+
+        App app = appRepository.findByAppHashToken(appHashCode);
+        List<UserAppDetails> userAppDetailsList = userAppDetailsRepository.getByAppDetailId(app.getAppDetailsId());
+
+        for (UserAppDetails detail : userAppDetailsList) {
+            User user = null;
+            if (null != detail.getUserId())
+                user = userService.getUserbyId(detail.getUserId())
+                    .get();
+            AppTeamResponseSimplified response = new AppTeamResponseSimplified();
+            response.setId(detail.getUserId());
+            if (null != detail.getUserStatus())
+                response.setStatus(detail.getUserStatus()
+                    .toString());
+            if (null != detail.getUserStatus() && detail.getUserStatus()
+                .equals(UserStatus.INVITED)) {
+                if (null != user) {
+                    response.setImage(user.getImage());
+                    response.setName(user.getFullName());
+                } else {
+                    UserAppInvitedDetails invd = userAppDetailsInvitedRepository.findById(detail.getInvitedDetailsId())
+                        .get();
+                    if (null != invd) {
+                        response.setName(invd.getName());
+                    }
+                }
+            } else {
+                response.setImage(user.getImage());
+                response.setName(user.getFullName());
+            }
+            reponses.add(response);
+        }
+        return reponses;
+    }
 }

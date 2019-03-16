@@ -41,6 +41,14 @@ public class AppOwnerInterceptor extends HandlerInterceptorAdapter {
             .equals("/api/secured/app")) {
             return true;
         }
+        
+        if(request.getRequestURI().equals("/api/secured/app/team/simplified") && request.getMethod().equals("GET")) {
+            return true;
+        }
+        
+        if(request.getRequestURI().equals("/api/secured/app/tag") && request.getMethod().equals("GET")) {
+            return true;
+        }
 
         String appHash = request.getHeader("X-App-Token");
         App app = appService.getAppByHashToken(appHash);
@@ -64,7 +72,7 @@ public class AppOwnerInterceptor extends HandlerInterceptorAdapter {
             }
             return true;
         } else {
-            throw new LiveChatException("User Has no app with given hash", HttpStatus.UNAUTHORIZED);
+            throw new LiveChatException("User Has no access to the requested resource", HttpStatus.UNAUTHORIZED);
         }
 
     }
