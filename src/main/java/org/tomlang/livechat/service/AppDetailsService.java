@@ -104,7 +104,7 @@ public class AppDetailsService {
 
     }
 
-    public List<AppTeamResponse> getAppTeamMembers(String authToken, String appHashCode) {
+    public List<AppTeamResponse> getAppTeamMembers(String authToken, String appHashCode, String status) {
         // find app by hashcode
         // get all UserAppDetails where appdetails id from the found app
         List<AppTeamResponse> reponses = new ArrayList<>();
@@ -112,7 +112,13 @@ public class AppDetailsService {
         App app = appRepository.findByAppHashToken(appHashCode);
         List<UserAppDetails> userAppDetailsList = userAppDetailsRepository.getByAppDetailId(app.getAppDetailsId());
 
+        UserStatus filterStatus = null;
+        if (null != status) {
+            filterStatus = UserStatus.valueOf(status.toUpperCase());
+        }
+
         for (UserAppDetails detail : userAppDetailsList) {
+
             User user = null;
             if (null != detail.getUserId())
                 user = userService.getUserbyId(detail.getUserId())
@@ -140,14 +146,19 @@ public class AppDetailsService {
                         response.setName(invd.getName());
                     }
                 }
-
             } else {
                 response.setEmail(user.getEmail());
                 response.setImage(user.getImage());
                 response.setName(user.getFullName());
             }
 
-            reponses.add(response);
+            if (null != filterStatus) {
+                if (filterStatus.equals(detail.getUserStatus())) {
+                    reponses.add(response);
+                }
+            } else {
+                reponses.add(response);
+            }
         }
         return reponses;
     }

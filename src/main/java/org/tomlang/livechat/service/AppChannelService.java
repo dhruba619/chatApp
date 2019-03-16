@@ -231,7 +231,7 @@ public class AppChannelService {
      * @throws LiveChatException
      */
     private void validateMembersForChannel(String authToken, String appHash, AppChannelRequest request) throws LiveChatException {
-        List<AppTeamResponse> teamMembers = appDetailService.getAppTeamMembers(authToken, appHash);
+        List<AppTeamResponse> teamMembers = appDetailService.getAppTeamMembers(authToken, appHash,null);
         List<Integer> teamUidList = new ArrayList<>();
         List<Integer> teamUidListInvlid = new ArrayList<>();
         for (AppTeamResponse appTeam : teamMembers) {

@@ -150,21 +150,5 @@ public class AppController {
         appDetailService.updateAvatar(fileDownloadUri, authToken, appHashCode);
         return new AvatarUploadResponse("success", fileDownloadUri);
     }
-    
-    @GetMapping("/app/team")
-    public ResponseEntity<List<AppTeamResponse>> getTeam(@RequestHeader("Authorization") String authToken, @RequestHeader("X-App-Token") String appHashCode) {
-        
-        return ResponseEntity.ok()
-            .body(appDetailService.getAppTeamMembers(authToken, appHashCode));
-    }
-    
-    @PostMapping("/app/team")
-    public ResponseEntity<AppTeamResponse> createTeam(@RequestHeader("Authorization") String authToken, @RequestHeader("X-App-Token") String appHashCode, @RequestBody CreateTeamRequest request) throws LiveChatException {
-         
-        AppTeamResponse response = new AppTeamResponse();
-        appTeamService.proccessCreateTeam(authToken, appHashCode, request, response);
-        return ResponseEntity.ok()
-            .body(response);
-    }
-
+  
 }
