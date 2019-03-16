@@ -26,7 +26,7 @@ public class AppDesign {
     
     
     @Column(name="theme_color",nullable=false)
-    @Pattern(regexp="/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/")
+    @Pattern(regexp="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
     private String themeColor;
     
     @Column(name="wallpaper")
