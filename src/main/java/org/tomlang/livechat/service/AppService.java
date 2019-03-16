@@ -18,9 +18,11 @@ import org.tomlang.livechat.entities.User;
 import org.tomlang.livechat.entities.UserAppDetails;
 import org.tomlang.livechat.enums.ChannelForwardPrefixConstant;
 import org.tomlang.livechat.enums.Role;
+import org.tomlang.livechat.enums.TagTarget;
 import org.tomlang.livechat.exceptions.LiveChatException;
 import org.tomlang.livechat.json.AppChannelRequest;
 import org.tomlang.livechat.json.AppRequest;
+import org.tomlang.livechat.json.AppTagJson;
 import org.tomlang.livechat.repositories.AppDetailsRepository;
 import org.tomlang.livechat.repositories.AppRepository;
 import org.tomlang.livechat.repositories.TokenRepository;
@@ -56,6 +58,10 @@ public class AppService {
     
     @Autowired
     AppChannelService appChannelService;
+    
+    
+    @Autowired
+    AppTagService appTagService;
 
     public App createApp(AppRequest request, String authToken) throws NoSuchAlgorithmException, LiveChatException {
         // find user from token
@@ -93,6 +99,7 @@ public class AppService {
         userAppDetails.setRole(Role.OWNER);
 
         userAppDetailsRepository.save(userAppDetails);
+        
         // Need to create the deafault channel for the app here
         AppChannelRequest appChannelRequest = new AppChannelRequest();
         appChannelRequest.setDefaultChannel(true);
@@ -102,6 +109,21 @@ public class AppService {
         mems.add(ChannelForwardPrefixConstant.TEAM_MEMER+String.valueOf(user.getId()));
         appChannelRequest.setMembers(mems);
         appChannelService.createAppChannel(authToken, app.getAppHashcode(), appChannelRequest);
+        
+        //need to create the default tags here
+        AppTagJson json1 =  new AppTagJson();
+        json1.setColor("#3b7587");
+        json1.setName("Open");
+        json1.setTarget(TagTarget.CONVERSATION);
+        
+        AppTagJson json2 =  new AppTagJson();
+        json2.setColor("#e3ff00");
+        json2.setName("New Lead");
+        json2.setTarget(TagTarget.CONTACT);
+        appTagService.createTag(authToken, appHash, json1);
+        appTagService.createTag(authToken, appHash, json2);
+        
+        
 
         return app;
 
