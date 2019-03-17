@@ -275,7 +275,7 @@ public class AppTeamService {
         App app = appService.getAppByHashToken(appHashCode);
         AppDetails appDetails = appDetailsRepository.findById(app.getAppDetailsId())
             .get();
-        UserAppDetails actionUserAppDetails = userAppDetailsRepository.getByUserIdAndAppDetail(request.getId(), appDetails.getId());
+        UserAppDetails actionUserAppDetails = userAppDetailsRepository.getByInvitedId(request.getId());
         if (UserStatus.INVITED.equals(actionUserAppDetails.getUserStatus())) {
             UserAppInvitedDetails invitedDetails = userAppDetailsInvitedRepository.findById(actionUserAppDetails.getInvitedDetailsId())
                 .get();

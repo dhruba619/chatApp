@@ -2,6 +2,8 @@ package org.tomlang.livechat.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.tomlang.livechat.exceptions.LiveChatException;
 import org.tomlang.livechat.json.ActivateDeactivateUninviteTeamRequest;
 import org.tomlang.livechat.json.AppTeamResponse;
@@ -24,6 +27,7 @@ import org.tomlang.livechat.service.AppTeamService;
 import org.tomlang.livechat.service.FileStorageService;
 import org.tomlang.livechat.service.UserAppService;
 
+@RestController
 public class TeamController {
 
     @Autowired
@@ -41,9 +45,11 @@ public class TeamController {
     @Autowired
     AppTeamService appTeamService;
 
-    @GetMapping("/api/secured/app/team")
-    public ResponseEntity<List<AppTeamResponse>> getTeam(@RequestHeader("Authorization") String authToken, @RequestHeader("X-App-Token") String appHashCode, @RequestParam String status) {
+    Logger log = LoggerFactory.getLogger(TeamController.class);
 
+    @GetMapping("/api/secured/app/team")
+    public ResponseEntity<List<AppTeamResponse>> getTeam(@RequestHeader("Authorization") String authToken, @RequestHeader("X-App-Token") String appHashCode, @RequestParam(value = "status", required=false) String status) {
+        log.debug("In get teams");
         return ResponseEntity.ok()
             .body(appDetailService.getAppTeamMembers(authToken, appHashCode, status));
     }
@@ -71,7 +77,8 @@ public class TeamController {
 
     @PutMapping("/api/secured/app/team")
     public ResponseEntity<UpdateTeamMember> updateTeamMember(@RequestHeader("Authorization") String authToken, @RequestHeader("X-App-Token") String appHashCode, @RequestBody UpdateTeamMember request) throws LiveChatException {
-        return ResponseEntity.ok().body(appTeamService.updateTeamMember(authToken, appHashCode, request));
+        return ResponseEntity.ok()
+            .body(appTeamService.updateTeamMember(authToken, appHashCode, request));
     }
 
     @PutMapping("/api/secured/app/team/uninvite")
@@ -82,7 +89,8 @@ public class TeamController {
 
     @GetMapping("/api/secured/app/team/simplified")
     public ResponseEntity<List<AppTeamResponseSimplified>> getTeamSimplified(@RequestHeader("Authorization") String authToken, @RequestHeader("X-App-Token") String appHashCode) {
-        return ResponseEntity.ok().body(appTeamService.getAppTeamMembersSimlified(authToken, appHashCode));
+        return ResponseEntity.ok()
+            .body(appTeamService.getAppTeamMembersSimlified(authToken, appHashCode));
 
     }
 }

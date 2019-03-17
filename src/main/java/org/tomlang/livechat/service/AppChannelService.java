@@ -1,12 +1,9 @@
 package org.tomlang.livechat.service;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
-import javax.swing.text.html.Option;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +19,9 @@ import org.tomlang.livechat.json.AppTeamResponse;
 import org.tomlang.livechat.repositories.AppChannelRepository;
 import org.tomlang.livechat.repositories.AppRepository;
 import org.tomlang.livechat.repositories.UserAppDetailsRepository;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 @Service
 public class AppChannelService {
@@ -52,7 +52,7 @@ public class AppChannelService {
         App app = appRepo.findByAppHashToken(appHash);
         if (null != app) {
             // check if default is true, than find the default channel of the app, make it not default and set this as default
-            if (request.isDefaultChannel()) {
+            if (request.isIsDefaultChannel()) {
                 AppChannel defaultChannel = channelRepo.findDefaultChannel(app.getId());
                 if (null != defaultChannel) {
                     defaultChannel.setDefaultChannel(false);
@@ -62,7 +62,7 @@ public class AppChannelService {
             AppChannel newChannel = new AppChannel();
             newChannel.setAppId(app.getId());
 
-            if (request.isDefaultChannel()) {
+            if (request.isIsDefaultChannel()) {
                 newChannel.setDefaultChannel(true);
             } else {
                 newChannel.setDefaultChannel(false);
@@ -104,7 +104,7 @@ public class AppChannelService {
         AppChannel updateChannel = updateChannelOptional.get();
 
         if (updateChannel.isDefaultChannel()) {
-            if (!request.isDefaultChannel()) {
+            if (!request.isIsDefaultChannel()) {
                 throw new LiveChatException("Default to non deafault is not allowed", HttpStatus.BAD_REQUEST);
             }
         }
@@ -113,7 +113,7 @@ public class AppChannelService {
         App app = appRepo.findByAppHashToken(appHash);
         if (null != app) {
             // check if default is true, than find the default channel of the app, make it not default and set this as default
-            if (request.isDefaultChannel()) {
+            if (request.isIsDefaultChannel()) {
                 AppChannel defaultChannel = channelRepo.findDefaultChannel(app.getId());
                 if (null != defaultChannel) {
                     defaultChannel.setDefaultChannel(false);
@@ -123,7 +123,7 @@ public class AppChannelService {
 
             updateChannel.setAppId(app.getId());
 
-            if (request.isDefaultChannel()) {
+            if (request.isIsDefaultChannel()) {
                 updateChannel.setDefaultChannel(true);
             } else {
                 updateChannel.setDefaultChannel(false);
@@ -182,11 +182,15 @@ public class AppChannelService {
         
         for(AppChannel appChannel: appChannels) {
             AppChannelRequest request = new AppChannelRequest();
-            request.setDefaultChannel(appChannel.isDefaultChannel());
+            request.setIsDefaultChannel(appChannel.isDefaultChannel());
             request.setDescription(appChannel.getDescription());
             request.setId(appChannel.getId());
             
-            List<String> mems = Arrays.asList(appChannel.getMembers().split(","));
+            //List<String> mems = Arrays.asList(appChannel.getMembers().split(","));
+            Gson gson = new Gson();
+            Type t = new TypeToken<List<String>>(){}.getType();
+            List<String> mems = gson.fromJson(appChannel.getMembers(), t);
+            
             request.setMembers(mems);
             request.setName(appChannel.getName());
             request.setOfflineForward(appChannel.getOfflineForward());

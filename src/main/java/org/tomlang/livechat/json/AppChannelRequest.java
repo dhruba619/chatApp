@@ -31,10 +31,10 @@ public class AppChannelRequest {
     public void setOfflineForward(String offlineForward) {
         this.offlineForward = offlineForward;
     }
-    public boolean isDefaultChannel() {
+    public boolean isIsDefaultChannel() {
         return isDefaultChannel;
     }
-    public void setDefaultChannel(boolean isDefaultChannel) {
+    public void setIsDefaultChannel(boolean isDefaultChannel) {
         this.isDefaultChannel = isDefaultChannel;
     }
     public String getDescription() {

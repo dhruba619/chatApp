@@ -105,7 +105,7 @@ public class AppService {
 
         // Need to create the deafault channel for the app here
         AppChannelRequest appChannelRequest = new AppChannelRequest();
-        appChannelRequest.setDefaultChannel(true);
+        appChannelRequest.setIsDefaultChannel(true);
         appChannelRequest.setDescription("This is the default channel.");
         appChannelRequest.setName("Default Channel");
         List<String> mems = new ArrayList<>();
